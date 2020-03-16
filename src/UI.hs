@@ -92,5 +92,6 @@ stats g = [("Score", Left (g ^. score)), ("Alive", Right (not $ g ^. dead))]
 handleEvent :: Game -> BrickEvent Name () -> EventM Name (Next Game)
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'r') [])) = continue initGame
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'q') [])) = halt g
+handleEvent g (VtyEvent (V.EvKey (V.KChar 'c') [V.MCtrl])) = halt g
 handleEvent g (VtyEvent (V.EvKey V.KEsc [])) = halt g
 handleEvent g _ = continue g
