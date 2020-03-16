@@ -26,7 +26,7 @@ runSnake = defaultMain app initGame
 app :: App Game () Name
 app = App { appDraw         = \g -> [ui g]
           , appChooseCursor = neverShowCursor
-          , appHandleEvent  = undefined
+          , appHandleEvent  = handleEvent
           , appStartEvent   = return
           , appAttrMap      = const theMap
           }
@@ -89,5 +89,8 @@ stats g = [("Score", Left (g ^. score)), ("Alive", Right (not $ g ^. dead))]
 
 
 -- Event handling
--- TODO
-
+handleEvent :: Game -> BrickEvent Name () -> EventM Name (Next Game)
+handleEvent g (VtyEvent (V.EvKey (V.KChar 'r') [])) = continue initGame
+handleEvent g (VtyEvent (V.EvKey (V.KChar 'q') [])) = halt g
+handleEvent g (VtyEvent (V.EvKey V.KEsc [])) = halt g
+handleEvent g _ = continue g
