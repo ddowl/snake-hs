@@ -2,8 +2,12 @@
 module Snake where
 
 import           Control.Lens.TH                ( makeLenses )
-import           Data.Sequence                  ( Seq
+import           Data.Sequence                 as S
+                                                ( Seq
+                                                , (<|)
+                                                , index
                                                 , fromList
+                                                , take
                                                 )
 
 type Coord = (Int, Int)
@@ -36,11 +40,21 @@ step = undefined
 
 -- | Move snake along in a marquee fashion
 move :: Game -> Game
-move = undefined
+move g = g { _snake = nextSnakeCoords (_snake g) (_dir g) }
+
+nextSnakeCoords :: Snake -> Direction -> Snake
+nextSnakeCoords s dir =
+  nextSnakeHead (s `index` 0) dir <| S.take (length s - 1) s
+
+nextSnakeHead :: Coord -> Direction -> Coord
+nextSnakeHead (x, y) North = (x, y + 1)
+nextSnakeHead (x, y) South = (x, y - 1)
+nextSnakeHead (x, y) East  = (x + 1, y)
+nextSnakeHead (x, y) West  = (x - 1, y)
 
 -- | Turn game direction (only turns orthogonally)
 turn :: Direction -> Game -> Game
-turn = undefined
+turn d g = g { _dir = d }
 
 -- | Initialize a paused game with random food location
 initGame :: Game
