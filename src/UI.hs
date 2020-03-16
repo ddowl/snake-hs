@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module UI
     ( runSnake
     )
@@ -48,10 +49,10 @@ cw :: Widget Name
 cw = str "  "
 
 snakeAttr, foodAttr, emptyAttr, gameOverAttr :: AttrName
-snakeAttr = attrName "snakeAttr"
-foodAttr = attrName "foodAttr"
-emptyAttr = attrName "emptyAttr"
-gameOverAttr = attrName "gameOver"
+snakeAttr = "snakeAttr"
+foodAttr = "foodAttr"
+emptyAttr = "emptyAttr"
+gameOverAttr = "gameOver"
 
 theMap :: AttrMap
 theMap = attrMap
