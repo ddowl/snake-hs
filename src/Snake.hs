@@ -43,8 +43,10 @@ move :: Game -> Game
 move g = g { _snake = nextSnakeCoords (_snake g) (_dir g) }
 
 nextSnakeCoords :: Snake -> Direction -> Snake
-nextSnakeCoords s dir =
-  nextSnakeHead (s `index` 0) dir <| S.take (length s - 1) s
+nextSnakeCoords s dir = nextHead <| withoutTail
+ where
+  nextHead    = nextSnakeHead (s `index` 0) dir
+  withoutTail = S.take (length s - 1) s
 
 nextSnakeHead :: Coord -> Direction -> Coord
 nextSnakeHead (x, y) North = (x, y + 1)
