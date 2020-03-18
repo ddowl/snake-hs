@@ -13,6 +13,7 @@ import qualified Brick.Widgets.Border.Style    as BS
 import qualified Graphics.Vty                  as V
 import           Control.Lens                   ( (^.) )
 import           Data.List                      ( intercalate )
+import           System.Random                  ( getStdGen )
 
 type Name = ()
 data Cell = Snake | Food | Empty
@@ -21,7 +22,9 @@ height = 15
 width = 15
 
 runSnake :: IO Game
-runSnake = defaultMain app initGame
+runSnake = do
+    gen <- getStdGen
+    defaultMain app (initGame gen)
 
 app :: App Game () Name
 app = App { appDraw         = \g -> [ui g]
@@ -90,12 +93,12 @@ stats g = [("Score", Left (g ^. score)), ("Alive", Right (not $ g ^. dead))]
 
 -- Event handling
 handleEvent :: Game -> BrickEvent Name () -> EventM Name (Next Game)
-handleEvent g (VtyEvent (V.EvKey V.KEnter [])) = continue $ move g
-handleEvent g (VtyEvent (V.EvKey V.KUp [])) = continue $ turn North g
-handleEvent g (VtyEvent (V.EvKey V.KDown [])) = continue $ turn South g
-handleEvent g (VtyEvent (V.EvKey V.KRight [])) = continue $ turn East g
-handleEvent g (VtyEvent (V.EvKey V.KLeft [])) = continue $ turn West g
-handleEvent g (VtyEvent (V.EvKey (V.KChar 'r') [])) = continue initGame
+handleEvent g (VtyEvent (V.EvKey V.KEnter      [])) = continue $ move g
+handleEvent g (VtyEvent (V.EvKey V.KUp         [])) = continue $ turn North g
+handleEvent g (VtyEvent (V.EvKey V.KDown       [])) = continue $ turn South g
+handleEvent g (VtyEvent (V.EvKey V.KRight      [])) = continue $ turn East g
+handleEvent g (VtyEvent (V.EvKey V.KLeft       [])) = continue $ turn West g
+handleEvent g (VtyEvent (V.EvKey (V.KChar 'r') [])) = continue (initGame (_stdGen g))
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'q') [])) = halt g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'c') [V.MCtrl])) = halt g
 handleEvent g (VtyEvent (V.EvKey V.KEsc [])) = halt g
