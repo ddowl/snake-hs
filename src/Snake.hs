@@ -1,5 +1,12 @@
 {-# LANGUAGE FlexibleContexts #-}
-module Snake where
+module Snake
+  ( Game(..)
+  , Direction(..)
+  , move
+  , turn
+  , initGame
+  )
+where
 
 import           Data.Sequence                 as S
                                                 ( Seq(..)
