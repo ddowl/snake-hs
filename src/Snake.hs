@@ -44,27 +44,21 @@ move g = g { snake       = nextSnake
            , dead        = isGameOver
            }
  where
+  isGameOver                = isOutOfBounds (snake g) || isOverlapping (snake g)
   snakeHead :<| _           = snake g
   withoutTail               = S.take (length (snake g) - 1) (snake g)
   nextHead                  = nextSnakeHead snakeHead (dir g)
   eatingPellet              = nextHead == pellet g
-  (nextPellets, nextPellet) = if eatingPellet
-    then genPellet (randPellets g)
-    else (randPellets g, pellet g)
-  nextSnake =
-    if eatingPellet then nextHead <| snake g else nextHead <| withoutTail
-  nextScore  = if eatingPellet then score g + 10 else score g
-  isGameOver = isOutOfBounds (snake g) || isOverlapping (snake g)
+  (x : y : mabeNextPellets) = randPellets g
+  (nextSnake, nextScore, nextPellets, nextPellet) = if eatingPellet
+    then (nextHead <| snake g, score g + 10, mabeNextPellets, (x, y))
+    else (nextHead <| withoutTail, score g, randPellets g, pellet g)
 
 nextSnakeHead :: Coord -> Direction -> Coord
 nextSnakeHead (x, y) North = (x, y + 1)
 nextSnakeHead (x, y) South = (x, y - 1)
 nextSnakeHead (x, y) East  = (x + 1, y)
 nextSnakeHead (x, y) West  = (x - 1, y)
-
-genPellet :: [Int] -> ([Int], Coord)
-genPellet randPellets = (nextPellets, (x, y))
-  where (x : y : nextPellets) = randPellets
 
 isOutOfBounds :: Snake -> Bool
 isOutOfBounds ((x, y) :<| _) = x < 0 || x >= 15 || y < 0 || y >= 15
