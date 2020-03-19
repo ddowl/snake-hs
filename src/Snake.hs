@@ -49,12 +49,14 @@ move :: Game -> Game
 move g = g { _snake        = nextSnake
            , _pellet       = nextPellet
            , _rand_pellets = nextPellets
+           , _score        = nextScore
            }
  where
   snake        = _snake g
   dir          = _dir g
   pellet       = _pellet g
   randPellets  = _rand_pellets g
+  score        = _score g
   nextHead     = nextSnakeHead (snake `index` 0) dir
   withoutTail  = S.take (length snake - 1) snake
   eatingPellet = nextHead == pellet
@@ -62,6 +64,7 @@ move g = g { _snake        = nextSnake
     if eatingPellet then genPellet randPellets else (randPellets, pellet)
   nextSnake =
     if eatingPellet then nextHead <| snake else nextHead <| withoutTail
+  nextScore = if eatingPellet then score + 10 else score
 
 nextSnakeHead :: Coord -> Direction -> Coord
 nextSnakeHead (x, y) North = (x, y + 1)
