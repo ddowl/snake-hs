@@ -6,7 +6,16 @@ where
 
 import           Snake
 
+import           Control.Monad                  ( forever )
+import           Control.Concurrent             ( threadDelay
+                                                , forkIO
+                                                )
+
 import           Brick
+import           Brick.BChan                    ( newBChan
+                                                , writeBChan
+                                                )
+
 import qualified Brick.Widgets.Center          as C
 import qualified Brick.Widgets.Border          as B
 import qualified Brick.Widgets.Border.Style    as BS
@@ -15,6 +24,7 @@ import           Control.Lens                   ( (^.) )
 import           Data.List                      ( intercalate )
 import           System.Random                  ( getStdGen )
 
+data Tick = Tick
 type Name = ()
 data Cell = Snake | Food | Empty
 
@@ -23,10 +33,16 @@ width = 15
 
 runSnake :: IO Game
 runSnake = do
-    gen <- getStdGen
-    defaultMain app (initGame gen)
+    gen  <- getStdGen
+    chan <- newBChan 10
+    forkIO $ forever $ do
+        writeBChan chan Tick
+        threadDelay 100000 -- decides how fast your game moves
+    let buildVty = V.mkVty V.defaultConfig
+    initialVty <- buildVty
+    customMain initialVty buildVty (Just chan) app (initGame gen)
 
-app :: App Game () Name
+app :: App Game Tick Name
 app = App { appDraw         = \g -> [ui g]
           , appChooseCursor = neverShowCursor
           , appHandleEvent  = handleEvent
@@ -92,13 +108,14 @@ stats g = [("Score", Left (g ^. score)), ("Alive", Right (not $ g ^. dead))]
 
 
 -- Event handling
-handleEvent :: Game -> BrickEvent Name () -> EventM Name (Next Game)
-handleEvent g (VtyEvent (V.EvKey V.KEnter      [])) = continue $ move g
-handleEvent g (VtyEvent (V.EvKey V.KUp         [])) = continue $ turn North g
-handleEvent g (VtyEvent (V.EvKey V.KDown       [])) = continue $ turn South g
-handleEvent g (VtyEvent (V.EvKey V.KRight      [])) = continue $ turn East g
-handleEvent g (VtyEvent (V.EvKey V.KLeft       [])) = continue $ turn West g
-handleEvent g (VtyEvent (V.EvKey (V.KChar 'r') [])) = continue (initGame (_stdGen g))
+handleEvent :: Game -> BrickEvent Name Tick -> EventM Name (Next Game)
+handleEvent g (AppEvent Tick                 ) = continue $ move g
+handleEvent g (VtyEvent (V.EvKey V.KUp    [])) = continue $ turn North g
+handleEvent g (VtyEvent (V.EvKey V.KDown  [])) = continue $ turn South g
+handleEvent g (VtyEvent (V.EvKey V.KRight [])) = continue $ turn East g
+handleEvent g (VtyEvent (V.EvKey V.KLeft  [])) = continue $ turn West g
+handleEvent g (VtyEvent (V.EvKey (V.KChar 'r') [])) =
+    continue (initGame (_stdGen g))
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'q') [])) = halt g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'c') [V.MCtrl])) = halt g
 handleEvent g (VtyEvent (V.EvKey V.KEsc [])) = halt g
