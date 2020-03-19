@@ -3,7 +3,7 @@ module Snake where
 
 import           Control.Lens.TH                ( makeLenses )
 import           Data.Sequence                 as S
-                                                ( Seq
+                                                ( Seq(..)
                                                 , (<|)
                                                 , index
                                                 , fromList
@@ -49,20 +49,21 @@ move g = g { _snake        = nextSnake
            , _dead         = isGameOver
            }
  where
-  snake        = _snake g
-  dir          = _dir g
-  pellet       = _pellet g
-  randPellets  = _rand_pellets g
-  score        = _score g
-  nextHead     = nextSnakeHead (snake `index` 0) dir
-  withoutTail  = S.take (length snake - 1) snake
-  eatingPellet = nextHead == pellet
+  snake           = _snake g
+  dir             = _dir g
+  pellet          = _pellet g
+  randPellets     = _rand_pellets g
+  score           = _score g
+  snakeHead :<| _ = snake
+  withoutTail     = S.take (length snake - 1) snake
+  nextHead        = nextSnakeHead snakeHead dir
+  eatingPellet    = nextHead == pellet
   (nextPellets, nextPellet) =
     if eatingPellet then genPellet randPellets else (randPellets, pellet)
   nextSnake =
     if eatingPellet then nextHead <| snake else nextHead <| withoutTail
   nextScore  = if eatingPellet then score + 10 else score
-  isGameOver = isOutOfBounds snake
+  isGameOver = isOutOfBounds snake || isOverlapping snake
 
 nextSnakeHead :: Coord -> Direction -> Coord
 nextSnakeHead (x, y) North = (x, y + 1)
@@ -75,8 +76,10 @@ genPellet randPellets = (nextPellets, (x, y))
   where (x : y : nextPellets) = randPellets
 
 isOutOfBounds :: Snake -> Bool
-isOutOfBounds snake = x < 0 || x >= 15 || y < 0 || y >= 15
-  where (x, y) = snake `index` 0
+isOutOfBounds ((x, y) :<| _) = x < 0 || x >= 15 || y < 0 || y >= 15
+
+isOverlapping :: Snake -> Bool
+isOverlapping (h :<| rest) = h `elem` rest
 
 -- | Turn game direction (only turns orthogonally)
 turn :: Direction -> Game -> Game
