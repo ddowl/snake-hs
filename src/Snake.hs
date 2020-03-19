@@ -83,7 +83,11 @@ isOverlapping (h :<| rest) = h `elem` rest
 
 -- | Turn game direction (only turns orthogonally)
 turn :: Direction -> Game -> Game
-turn d g = g { _dir = d }
+turn North g | _dir g == South = g
+turn South g | _dir g == North = g
+turn East g | _dir g == West   = g
+turn West g | _dir g == East   = g
+turn d g                       = g { _dir = d }
 
 -- | Initialize a paused game with random food location
 initGame :: StdGen -> Game
