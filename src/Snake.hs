@@ -45,8 +45,8 @@ move g = g { snake       = nextSnake
            }
  where
   isGameOver                = isOutOfBounds (snake g) || isOverlapping (snake g)
-  snakeHead :<| _           = snake g
-  withoutTail               = S.take (length (snake g) - 1) (snake g)
+  snakeHead   :<| _         = snake g
+  withoutTail :|> _         = snake g
   nextHead                  = nextSnakeHead snakeHead (dir g)
   eatingPellet              = nextHead == pellet g
   (x : y : mabeNextPellets) = randPellets g
