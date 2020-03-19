@@ -8,6 +8,7 @@ module Snake
   )
 where
 
+import           Constants
 import           Data.Sequence                 as S
                                                 ( Seq(..)
                                                 , (<|)
@@ -58,7 +59,7 @@ move g = g { snake       = nextSnake
   eatingPellet              = nextHead == pellet g
   (x : y : mabeNextPellets) = randPellets g
   (nextSnake, nextScore, nextPellets, nextPellet) = if eatingPellet
-    then (nextHead <| snake g, score g + 10, mabeNextPellets, (x, y))
+    then (nextHead <| snake g, score g + pelletValue, mabeNextPellets, (x, y))
     else (nextHead <| withoutTail, score g, randPellets g, pellet g)
 
 nextSnakeHead :: Coord -> Direction -> Coord
@@ -68,7 +69,7 @@ nextSnakeHead (x, y) East  = (x + 1, y)
 nextSnakeHead (x, y) West  = (x - 1, y)
 
 isOutOfBounds :: Snake -> Bool
-isOutOfBounds ((x, y) :<| _) = x < 0 || x >= 15 || y < 0 || y >= 15
+isOutOfBounds ((x, y) :<| _) = x < 0 || x >= size || y < 0 || y >= size
 
 isOverlapping :: Snake -> Bool
 isOverlapping (h :<| rest) = h `elem` rest
@@ -87,7 +88,7 @@ initGame gen = Game { snake       = fromList [(5, 5), (5, 4), (5, 3)]
                     , dir         = North
                     , pellet      = (3, 2)
                     , stdGen      = gen
-                    , randPellets = randomRs (0, 14) gen
+                    , randPellets = randomRs (0, size - 1) gen
                     , dead        = False
                     , paused      = True
                     , score       = 0

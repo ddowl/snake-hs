@@ -5,6 +5,7 @@ module UI
 where
 
 import           Snake
+import           Constants
 
 import           Control.Monad                  ( forever )
 import           Control.Concurrent             ( threadDelay
@@ -25,16 +26,13 @@ data Tick = Tick
 type Name = ()
 data Cell = Snake | Food | Empty
 
-height = 15
-width = 15
-
 runSnake :: IO Game
 runSnake = do
     gen  <- getStdGen
     chan <- newBChan 10
     forkIO $ forever $ do
         writeBChan chan Tick
-        threadDelay 100000 -- decides how fast your game moves
+        threadDelay delayNanos
     let buildVty = V.mkVty V.defaultConfig
     initialVty <- buildVty
     customMain initialVty buildVty (Just chan) app (initGame gen)
@@ -67,8 +65,8 @@ snakePane g = withBorderStyle BS.unicodeRounded
     $ B.borderWithLabel (str "Snake!") grid
   where
     grid = vBox (map hBox rows)
-    rows = [ cellsInRow r | r <- [height - 1, height - 2 .. 0] ]
-    cellsInRow y = [ drawCoord (x, y) | x <- [0 .. width - 1] ]
+    rows = [ cellsInRow r | r <- [size - 1, size - 2 .. 0] ]
+    cellsInRow y = [ drawCoord (x, y) | x <- [0 .. size - 1] ]
     drawCoord = drawCell . cellAt
     cellAt c | c `elem` snake g = Snake
              | c == pellet g    = Food
