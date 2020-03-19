@@ -33,6 +33,7 @@ data Game = Game
   , _dir            :: Direction
   , _pellet         :: Coord
   , _stdGen         :: StdGen
+  , _rand_pellets   :: [Int]
   , _dead           :: Bool
   , _paused         :: Bool
   , _score          :: Int
@@ -45,17 +46,20 @@ step = undefined
 
 -- | Move snake along in a marquee fashion
 move :: Game -> Game
-move g = g { _snake = nextSnake, _pellet = nextPellet, _stdGen = nextStdGen }
+move g = g { _snake        = nextSnake
+           , _pellet       = nextPellet
+           , _rand_pellets = nextPellets
+           }
  where
   snake        = _snake g
   dir          = _dir g
   pellet       = _pellet g
-  stdGen       = _stdGen g
+  randPellets  = _rand_pellets g
   nextHead     = nextSnakeHead (snake `index` 0) dir
   withoutTail  = S.take (length snake - 1) snake
   eatingPellet = nextHead == pellet
-  (nextStdGen, nextPellet) =
-    if eatingPellet then genPellet stdGen pellet else (stdGen, pellet)
+  (nextPellets, nextPellet) =
+    if eatingPellet then genPellet randPellets else (randPellets, pellet)
   nextSnake =
     if eatingPellet then nextHead <| snake else nextHead <| withoutTail
 
@@ -65,11 +69,9 @@ nextSnakeHead (x, y) South = (x, y - 1)
 nextSnakeHead (x, y) East  = (x + 1, y)
 nextSnakeHead (x, y) West  = (x - 1, y)
 
-genPellet :: StdGen -> Coord -> (StdGen, Coord)
-genPellet stdGen pellet = (nextGen, (x, y))
- where
-  (x, g      ) = randomR (0, 14) stdGen
-  (y, nextGen) = randomR (0, 14) g
+genPellet :: [Int] -> ([Int], Coord)
+genPellet randPellets = (nextPellets, (x, y))
+  where (x : y : nextPellets) = randPellets
 
 -- | Turn game direction (only turns orthogonally)
 turn :: Direction -> Game -> Game
@@ -77,11 +79,12 @@ turn d g = g { _dir = d }
 
 -- | Initialize a paused game with random food location
 initGame :: StdGen -> Game
-initGame gen = Game { _snake  = fromList [(5, 5), (5, 4), (5, 3)]
-                    , _dir    = North
-                    , _pellet = (3, 2)
-                    , _stdGen = gen
-                    , _dead   = False
-                    , _paused = True
-                    , _score  = 0
+initGame gen = Game { _snake        = fromList [(5, 5), (5, 4), (5, 3)]
+                    , _dir          = North
+                    , _pellet       = (3, 2)
+                    , _stdGen       = gen
+                    , _rand_pellets = randomRs (0, 14) gen
+                    , _dead         = False
+                    , _paused       = True
+                    , _score        = 0
                     }
