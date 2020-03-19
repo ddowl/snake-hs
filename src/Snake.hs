@@ -1,7 +1,6 @@
-{-# LANGUAGE TemplateHaskell, FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Snake where
 
-import           Control.Lens.TH                ( makeLenses )
 import           Data.Sequence                 as S
                                                 ( Seq(..)
                                                 , (<|)
@@ -18,9 +17,6 @@ import           System.Random                  ( Random(..)
 type Coord = (Int, Int)
 type Snake = Seq Coord
 
-data Stream a = a :| Stream a
-  deriving (Show)
-
 data Direction
   = North
   | South
@@ -29,41 +25,36 @@ data Direction
   deriving (Eq, Show)
 
 data Game = Game
-  { _snake          :: Snake
-  , _dir            :: Direction
-  , _pellet         :: Coord
-  , _stdGen         :: StdGen
-  , _rand_pellets   :: [Int]
-  , _dead           :: Bool
-  , _paused         :: Bool
-  , _score          :: Int
+  { snake          :: Snake
+  , dir            :: Direction
+  , pellet         :: Coord
+  , stdGen         :: StdGen
+  , randPellets    :: [Int]
+  , dead           :: Bool
+  , paused         :: Bool
+  , score          :: Int
   }
-makeLenses ''Game
 
 -- | Move snake along in a marquee fashion
 move :: Game -> Game
-move g = g { _snake        = nextSnake
-           , _pellet       = nextPellet
-           , _rand_pellets = nextPellets
-           , _score        = nextScore
-           , _dead         = isGameOver
+move g = g { snake       = nextSnake
+           , pellet      = nextPellet
+           , randPellets = nextPellets
+           , score       = nextScore
+           , dead        = isGameOver
            }
  where
-  snake           = _snake g
-  dir             = _dir g
-  pellet          = _pellet g
-  randPellets     = _rand_pellets g
-  score           = _score g
-  snakeHead :<| _ = snake
-  withoutTail     = S.take (length snake - 1) snake
-  nextHead        = nextSnakeHead snakeHead dir
-  eatingPellet    = nextHead == pellet
-  (nextPellets, nextPellet) =
-    if eatingPellet then genPellet randPellets else (randPellets, pellet)
+  snakeHead :<| _           = snake g
+  withoutTail               = S.take (length (snake g) - 1) (snake g)
+  nextHead                  = nextSnakeHead snakeHead (dir g)
+  eatingPellet              = nextHead == pellet g
+  (nextPellets, nextPellet) = if eatingPellet
+    then genPellet (randPellets g)
+    else (randPellets g, pellet g)
   nextSnake =
-    if eatingPellet then nextHead <| snake else nextHead <| withoutTail
-  nextScore  = if eatingPellet then score + 10 else score
-  isGameOver = isOutOfBounds snake || isOverlapping snake
+    if eatingPellet then nextHead <| snake g else nextHead <| withoutTail
+  nextScore  = if eatingPellet then score g + 10 else score g
+  isGameOver = isOutOfBounds (snake g) || isOverlapping (snake g)
 
 nextSnakeHead :: Coord -> Direction -> Coord
 nextSnakeHead (x, y) North = (x, y + 1)
@@ -83,20 +74,20 @@ isOverlapping (h :<| rest) = h `elem` rest
 
 -- | Turn game direction (only turns orthogonally)
 turn :: Direction -> Game -> Game
-turn North g | _dir g == South = g
-turn South g | _dir g == North = g
-turn East g | _dir g == West   = g
-turn West g | _dir g == East   = g
-turn d g                       = g { _dir = d }
+turn North g | dir g == South = g
+turn South g | dir g == North = g
+turn East g | dir g == West   = g
+turn West g | dir g == East   = g
+turn d g                      = g { dir = d }
 
 -- | Initialize a paused game with random food location
 initGame :: StdGen -> Game
-initGame gen = Game { _snake        = fromList [(5, 5), (5, 4), (5, 3)]
-                    , _dir          = North
-                    , _pellet       = (3, 2)
-                    , _stdGen       = gen
-                    , _rand_pellets = randomRs (0, 14) gen
-                    , _dead         = False
-                    , _paused       = True
-                    , _score        = 0
+initGame gen = Game { snake       = fromList [(5, 5), (5, 4), (5, 3)]
+                    , dir         = North
+                    , pellet      = (3, 2)
+                    , stdGen      = gen
+                    , randPellets = randomRs (0, 14) gen
+                    , dead        = False
+                    , paused      = True
+                    , score       = 0
                     }

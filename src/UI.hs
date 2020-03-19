@@ -10,17 +10,14 @@ import           Control.Monad                  ( forever )
 import           Control.Concurrent             ( threadDelay
                                                 , forkIO
                                                 )
-
 import           Brick
 import           Brick.BChan                    ( newBChan
                                                 , writeBChan
                                                 )
-
 import qualified Brick.Widgets.Center          as C
 import qualified Brick.Widgets.Border          as B
 import qualified Brick.Widgets.Border.Style    as BS
 import qualified Graphics.Vty                  as V
-import           Control.Lens                   ( (^.) )
 import           Data.List                      ( intercalate )
 import           System.Random                  ( getStdGen )
 
@@ -73,9 +70,9 @@ snakePane g = withBorderStyle BS.unicodeRounded
     rows = [ cellsInRow r | r <- [height - 1, height - 2 .. 0] ]
     cellsInRow y = [ drawCoord (x, y) | x <- [0 .. width - 1] ]
     drawCoord = drawCell . cellAt
-    cellAt c | c `elem` g ^. snake = Snake
-             | c == g ^. pellet    = Food
-             | otherwise           = Empty
+    cellAt c | c `elem` snake g = Snake
+             | c == pellet g    = Food
+             | otherwise        = Empty
 
 drawCell :: Cell -> Widget Name
 drawCell Snake = withAttr snakeAttr cw
@@ -104,20 +101,19 @@ mergeStatLabel (label, Right b) = label ++ ": " ++ show b
 -- I don't like how I can't easily make a union on Int|Bool.
 -- They both are typeclasses of Show, so why can't I return a type that impls Show?
 stats :: Game -> [(String, Either Int Bool)]
-stats g = [("Score", Left (g ^. score)), ("Alive", Right (not $ g ^. dead))]
-
+stats g = [("Score", Left (score g)), ("Alive", Right (not . dead $ g))]
 
 -- Event handling
 handleEvent :: Game -> BrickEvent Name Tick -> EventM Name (Next Game)
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'q') []       )) = halt g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'c') [V.MCtrl])) = halt g
 handleEvent g (VtyEvent (V.EvKey V.KEsc        []       )) = halt g
-handleEvent g _ | _dead g                      = continue g
+handleEvent g _ | dead g                       = continue g
 handleEvent g (AppEvent Tick                 ) = continue $ move g
 handleEvent g (VtyEvent (V.EvKey V.KUp    [])) = continue $ turn North g
 handleEvent g (VtyEvent (V.EvKey V.KDown  [])) = continue $ turn South g
 handleEvent g (VtyEvent (V.EvKey V.KRight [])) = continue $ turn East g
 handleEvent g (VtyEvent (V.EvKey V.KLeft  [])) = continue $ turn West g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'r') [])) =
-    continue (initGame (_stdGen g))
+    continue (initGame (stdGen g))
 handleEvent g _ = continue g
