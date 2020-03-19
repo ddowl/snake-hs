@@ -40,16 +40,13 @@ data Game = Game
   }
 makeLenses ''Game
 
--- | Step forward in time
-step :: Game -> Game
-step = undefined
-
 -- | Move snake along in a marquee fashion
 move :: Game -> Game
 move g = g { _snake        = nextSnake
            , _pellet       = nextPellet
            , _rand_pellets = nextPellets
            , _score        = nextScore
+           , _dead         = isGameOver
            }
  where
   snake        = _snake g
@@ -64,7 +61,8 @@ move g = g { _snake        = nextSnake
     if eatingPellet then genPellet randPellets else (randPellets, pellet)
   nextSnake =
     if eatingPellet then nextHead <| snake else nextHead <| withoutTail
-  nextScore = if eatingPellet then score + 10 else score
+  nextScore  = if eatingPellet then score + 10 else score
+  isGameOver = isOutOfBounds snake
 
 nextSnakeHead :: Coord -> Direction -> Coord
 nextSnakeHead (x, y) North = (x, y + 1)
@@ -75,6 +73,10 @@ nextSnakeHead (x, y) West  = (x - 1, y)
 genPellet :: [Int] -> ([Int], Coord)
 genPellet randPellets = (nextPellets, (x, y))
   where (x : y : nextPellets) = randPellets
+
+isOutOfBounds :: Snake -> Bool
+isOutOfBounds snake = x < 0 || x >= 15 || y < 0 || y >= 15
+  where (x, y) = snake `index` 0
 
 -- | Turn game direction (only turns orthogonally)
 turn :: Direction -> Game -> Game
